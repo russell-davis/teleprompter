@@ -1,0 +1,158 @@
+---
+import '../styles/main.css';
+import pkg from '../../package.json';
+const version = `v${pkg.version}`;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teleprompter</title>
+</head>
+<body>
+  <div class="script-list" id="scriptList" data-testid="script-list-page">
+    <h1 data-testid="page-title">Teleprompter Scripts</h1>
+    <ul id="scripts" data-testid="scripts-list"></ul>
+    <div class="new-script-form" data-testid="new-script-form">
+      <input type="text" id="newScriptName" placeholder="new-script-name" data-testid="new-script-input">
+      <button onclick="createNewScript()" data-testid="create-script-button">Create</button>
+    </div>
+  </div>
+
+  <div class="editor-view" id="editorView" data-testid="editor-view">
+    <div class="editor-header">
+      <div class="editor-header-left">
+        <a href="/" class="back-btn" data-testid="editor-back-to-scripts">← Scripts</a>
+        <input type="text" class="editor-title-input" id="editorTitle" data-testid="editor-title-input">
+      </div>
+      <div class="controls">
+        <button id="presentBtn" data-testid="present-button">Present</button>
+        <span class="version">{version}</span>
+      </div>
+    </div>
+    <div class="editor-main">
+      <div class="editor-pane">
+        <textarea id="scriptEditor" placeholder={`# Section Heading
+
+Write your script here...
+
+Blank lines separate blocks.
+[click] UI element
+\`command to type\`
+> prepare: Setup note
+~ Internal note
+>> Coming up next...`} data-testid="script-editor"></textarea>
+        <div class="syntax-help">
+          <span><code># text</code> heading</span>
+          <span><code>[click]</code> action</span>
+          <span><code>`code`</code> type</span>
+          <span><code>&gt; prepare:</code> setup</span>
+          <span><code>~</code> note</span>
+          <span><code>&gt;&gt;</code> next</span>
+          <span>plain text = say</span>
+        </div>
+      </div>
+      <div class="preview-pane" id="previewPane" data-testid="preview-pane"></div>
+    </div>
+  </div>
+
+  <div class="teleprompter" id="teleprompter" data-testid="teleprompter-view">
+    <div class="header" data-testid="header">
+      <div class="header-left">
+        <a href="/" class="back-btn" data-testid="back-to-scripts">← Scripts</a>
+        <span class="script-title" id="scriptTitle" data-testid="script-title"></span>
+      </div>
+      <div class="controls">
+        <span class="progress" id="progress" data-testid="progress-indicator">1 / 1</span>
+        <button id="editBtn" data-testid="edit-mode-button">Edit</button>
+        <button id="focusBtn" data-testid="focus-mode-button">Focus</button>
+        <button id="resetBtn" data-testid="reset-button">Reset</button>
+        <button id="helpBtn" class="help-btn" title="Help" data-testid="help-button">?</button>
+      </div>
+    </div>
+    <div class="content" id="content" data-testid="content-area"></div>
+    <button class="add-block-btn" id="addBlockBtn" data-testid="add-block-button">+ Add Block</button>
+  </div>
+
+  <div class="keyboard-hints" id="keyboardHints" data-testid="keyboard-hints">
+    <kbd>Space</kbd> / <kbd>↓</kbd> Next
+    <kbd>↑</kbd> Prev
+    <kbd>E</kbd> Edit
+    <kbd>F</kbd> Focus
+    <kbd>R</kbd> Reset
+  </div>
+
+  <div class="help-hint" onclick="showHelp()" data-testid="help-hint">
+    <kbd>?</kbd> Help
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="helpOverlay" data-testid="help-modal-overlay">
+    <div class="modal help-modal" data-testid="help-modal">
+      <h2 data-testid="help-title">How to Use Teleprompter</h2>
+
+      <div class="help-section">
+        <h3>Modes</h3>
+        <p><strong>Present mode</strong> (default): Navigate through your script with keyboard or clicks. Press Space or arrow keys to advance.</p>
+        <p><strong>Edit mode</strong> (E): See all blocks, drag to reorder, click buttons to edit/delete.</p>
+        <p><strong>Focus mode</strong> (F): Shows only the current block in large text for recording.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>Block Types</h3>
+        <div class="help-grid">
+          <div class="help-block-type say"><strong>Say</strong><span>What to speak</span></div>
+          <div class="help-block-type click"><strong>Click</strong><span>UI interactions</span></div>
+          <div class="help-block-type type"><strong>Type</strong><span>Commands to enter</span></div>
+          <div class="help-block-type prepare"><strong>Prepare</strong><span>Setup reminders</span></div>
+          <div class="help-block-type next"><strong>Next</strong><span>Preview ahead</span></div>
+          <div class="help-block-type heading"><strong>Heading</strong><span>Section breaks</span></div>
+          <div class="help-block-type note"><strong>Note</strong><span>Internal notes</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Keyboard Shortcuts</h3>
+        <div class="help-keys">
+          <div class="help-key"><kbd>Space</kbd> <span>Next</span></div>
+          <div class="help-key"><kbd>↑</kbd><kbd>↓</kbd> <span>Navigate</span></div>
+          <div class="help-key"><kbd>E</kbd> <span>Edit mode</span></div>
+          <div class="help-key"><kbd>F</kbd> <span>Focus mode</span></div>
+          <div class="help-key"><kbd>R</kbd> <span>Reset</span></div>
+          <div class="help-key"><kbd>Esc</kbd> <span>Exit mode</span></div>
+        </div>
+      </div>
+
+      <div class="help-footer">
+        <button onclick="closeHelp()" data-testid="help-dismiss-button">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="modalOverlay" data-testid="block-modal-overlay">
+    <div class="modal" data-testid="block-modal">
+      <h2 id="modalTitle" data-testid="modal-title">Edit Block</h2>
+      <label>Type</label>
+      <div class="type-selector" id="typeSelector" data-testid="type-selector">
+        <button data-type="say" data-testid="type-button-say">Say</button>
+        <button data-type="click" data-testid="type-button-click">Click</button>
+        <button data-type="type" data-testid="type-button-type">Type</button>
+        <button data-type="prepare" data-testid="type-button-prepare">Prepare</button>
+        <button data-type="next" data-testid="type-button-next">Next</button>
+        <button data-type="heading" data-testid="type-button-heading">Heading</button>
+        <button data-type="note" data-testid="type-button-note">Note</button>
+      </div>
+      <label>Content</label>
+      <textarea id="blockContent" placeholder="Enter content..." data-testid="block-content-input"></textarea>
+      <div class="modal-buttons">
+        <button class="cancel" onclick="closeModal()" data-testid="modal-cancel-button">Cancel</button>
+        <button class="save" onclick="saveBlock()" data-testid="modal-save-button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline src="/scripts/app.js"></script>
+</body>
+</html>
