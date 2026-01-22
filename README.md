@@ -1,6 +1,17 @@
 # Teleprompter
-
 A simple teleprompter for video scripts with clear visual sections for different action types.
+
+Scripts are stored in the browser and written in a simple markdown-like syntax. The editor shows your script source on the left and the rendered teleprompter view on the right.
+
+![Editor View](docs/images/editor.png)
+
+Built-in help explains the different block types and keyboard shortcuts.
+
+![Help Modal](docs/images/help-modal.png)
+
+
+
+![Script List](docs/images/home.png)
 
 ## Quick Start
 

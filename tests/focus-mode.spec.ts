@@ -5,6 +5,8 @@ test.describe('Focus Mode', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    // Click Present to enter teleprompter view (editor view is default now)
+    await page.getByTestId('present-button').click();
   });
 
   test('F key enters focus mode', async ({ page }) => {

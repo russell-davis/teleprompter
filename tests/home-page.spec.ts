@@ -27,7 +27,7 @@ test.describe('Home Page - Script List', () => {
     await page.goto('/');
     await page.getByTestId('script-link-example').click();
     await expect(page).toHaveURL('/example');
-    await expect(page.getByTestId('teleprompter-view')).toBeVisible();
+    await expect(page.getByTestId('editor-view')).toBeVisible();
   });
 
   test('creates new script with valid name', async ({ page }) => {
@@ -37,10 +37,14 @@ test.describe('Home Page - Script List', () => {
     await page.getByTestId('create-script-button').click();
 
     await expect(page).toHaveURL(`/${scriptName}`);
-    await expect(page.getByTestId('teleprompter-view')).toBeVisible();
+    await expect(page.getByTestId('editor-view')).toBeVisible();
 
-    // Clean up - delete the script via API
-    await page.request.delete(`/api/scripts/${scriptName}`);
+    // Clean up - delete the script from localStorage
+    await page.evaluate((name) => {
+      const scripts = JSON.parse(localStorage.getItem('teleprompter-scripts') || '{}');
+      delete scripts[name];
+      localStorage.setItem('teleprompter-scripts', JSON.stringify(scripts));
+    }, scriptName);
   });
 
   test('does not create script with empty name', async ({ page }) => {

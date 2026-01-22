@@ -5,6 +5,8 @@ test.describe('Edit Mode', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    // Click Present to enter teleprompter view (editor view is default now)
+    await page.getByTestId('present-button').click();
   });
 
   test('E key enters edit mode', async ({ page }) => {
@@ -91,24 +93,32 @@ test.describe('Block CRUD Operations', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
 
-    // Create test script via API
-    await page.request.put(`/api/scripts/${testScriptName}`, {
-      data: {
+    // Create test script via localStorage
+    await page.evaluate((name) => {
+      const scripts = JSON.parse(localStorage.getItem('teleprompter-scripts') || '{}');
+      scripts[name] = {
         title: 'Test CRUD Script',
         blocks: [
           { type: 'heading', content: 'Test Heading' },
           { type: 'say', content: 'Test content' },
           { type: 'click', content: 'Click something' },
         ],
-      },
-    });
+      };
+      localStorage.setItem('teleprompter-scripts', JSON.stringify(scripts));
+    }, testScriptName);
 
     await page.goto(`/${testScriptName}`);
+    // Click Present to enter teleprompter view (editor view is default now)
+    await page.getByTestId('present-button').click();
   });
 
   test.afterEach(async ({ page }) => {
-    // Clean up test script
-    await page.request.delete(`/api/scripts/${testScriptName}`);
+    // Clean up test script from localStorage
+    await page.evaluate((name) => {
+      const scripts = JSON.parse(localStorage.getItem('teleprompter-scripts') || '{}');
+      delete scripts[name];
+      localStorage.setItem('teleprompter-scripts', JSON.stringify(scripts));
+    }, testScriptName);
   });
 
   test('opens add block modal', async ({ page }) => {

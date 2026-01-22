@@ -5,6 +5,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.keyboard.press('?');
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -16,6 +17,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.getByTestId('help-button').click();
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -25,6 +27,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.getByTestId('help-hint').click();
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -34,6 +37,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.keyboard.press('?');
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -46,6 +50,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.keyboard.press('?');
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -59,6 +64,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.keyboard.press('?');
     await expect(page.getByTestId('help-modal-overlay')).toBeVisible();
@@ -73,6 +79,7 @@ test.describe('Help Modal', () => {
     await page.evaluate(() => localStorage.removeItem('teleprompter-help-seen'));
 
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     // Wait for the timeout (500ms) plus some buffer
     await page.waitForTimeout(700);
@@ -86,6 +93,7 @@ test.describe('Help Modal', () => {
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
 
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     // Wait to ensure help doesn't auto-open
     await page.waitForTimeout(700);
@@ -97,6 +105,7 @@ test.describe('Help Modal', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    await page.getByTestId('present-button').click();
 
     await page.keyboard.press('?');
 

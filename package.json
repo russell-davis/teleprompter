@@ -2,12 +2,17 @@
   "name": "teleprompter",
   "version": "1.0.0",
   "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
     "start": "bun run server.ts",
-    "dev": "bun --watch run server.ts",
     "test": "bunx playwright test",
     "test:ui": "bunx playwright test --ui"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0"
+  },
+  "dependencies": {
+    "astro": "^5.16.14"
   }
 }

@@ -58,6 +58,30 @@
     .script-list a:hover { background: #2a2a2a; }
     .script-list .empty { color: var(--dim); font-style: italic; }
 
+    .script-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .script-item a { flex: 1; }
+
+    .script-item .delete-btn {
+      padding: 0.75rem 1rem;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 4px;
+      color: var(--dim);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .script-item .delete-btn:hover {
+      background: #a33;
+      color: var(--text);
+    }
+
     .new-script-form {
       margin-top: 2rem;
       padding-top: 1.5rem;
@@ -94,6 +118,118 @@
     }
 
     .teleprompter.active { display: flex; }
+
+    /* Editor View */
+    .editor-view {
+      display: none;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .editor-view.active { display: flex; }
+
+    .editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: #111;
+      border-bottom: 1px solid #222;
+    }
+
+    .editor-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .editor-title {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .editor-title-input {
+      font-size: 1rem;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      padding: 0.25rem;
+      border-bottom: 1px solid transparent;
+    }
+
+    .editor-title-input:focus {
+      outline: none;
+      border-bottom-color: var(--dim);
+    }
+
+    .editor-main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .editor-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #222;
+    }
+
+    .editor-pane textarea {
+      flex: 1;
+      background: #0d0d0d;
+      color: var(--text);
+      border: none;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 1rem;
+      line-height: 1.6;
+      resize: none;
+    }
+
+    .editor-pane textarea:focus { outline: none; }
+
+    .editor-pane textarea::placeholder { color: var(--dim); }
+
+    .preview-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+      background: var(--bg);
+    }
+
+    .preview-pane .block {
+      max-width: none;
+      margin-bottom: 0.75rem;
+      padding: 1rem;
+      opacity: 1;
+    }
+
+    .preview-pane .block-content {
+      font-size: 1.25rem;
+    }
+
+    .preview-pane .block.say .block-content { font-size: 1.5rem; }
+    .preview-pane .block.heading .block-content { font-size: 1.75rem; }
+
+    .syntax-help {
+      padding: 0.75rem 1.5rem;
+      background: #111;
+      border-top: 1px solid #222;
+      font-size: 0.8rem;
+      color: var(--dim);
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .syntax-help code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      color: var(--text);
+    }
 
     .header {
       display: flex;
@@ -141,6 +277,12 @@
 
     .controls button:hover { background: #333; }
     .controls button.active { background: #4ecdc4; color: #000; }
+
+    .version {
+      font-size: 0.75rem;
+      color: var(--dim);
+      margin-left: 0.5rem;
+    }
 
     .progress {
       font-size: 0.85rem;
@@ -585,6 +727,43 @@
     </div>
   </div>
 
+  <div class="editor-view" id="editorView" data-testid="editor-view">
+    <div class="editor-header">
+      <div class="editor-header-left">
+        <a href="/" class="back-btn" data-testid="editor-back-to-scripts">← Scripts</a>
+        <input type="text" class="editor-title-input" id="editorTitle" data-testid="editor-title-input">
+      </div>
+      <div class="controls">
+        <button id="presentBtn" data-testid="present-button">Present</button>
+        <span class="version">v1.0.0</span>
+      </div>
+    </div>
+    <div class="editor-main">
+      <div class="editor-pane">
+        <textarea id="scriptEditor" placeholder="# Section Heading
+
+Write your script here...
+
+Blank lines separate blocks.
+[click] UI element
+`command to type`
+> prepare: Setup note
+~ Internal note
+>> Coming up next..." data-testid="script-editor"></textarea>
+        <div class="syntax-help">
+          <span><code># text</code> heading</span>
+          <span><code>[click]</code> action</span>
+          <span><code>`code`</code> type</span>
+          <span><code>> prepare:</code> setup</span>
+          <span><code>~</code> note</span>
+          <span><code>>></code> next</span>
+          <span>plain text = say</span>
+        </div>
+      </div>
+      <div class="preview-pane" id="previewPane" data-testid="preview-pane"></div>
+    </div>
+  </div>
+
   <div class="teleprompter" id="teleprompter" data-testid="teleprompter-view">
     <div class="header" data-testid="header">
       <div class="header-left">
@@ -692,51 +871,253 @@
 
     const scriptName = window.location.pathname.slice(1);
 
+    // ============ LOCAL STORAGE ============
+    const STORAGE_KEY = 'teleprompter-scripts';
+
+    const exampleScript = {
+      title: 'Example Script',
+      blocks: [
+        { type: 'heading', content: 'Introduction' },
+        { type: 'prepare', content: 'Have your demo application ready' },
+        { type: 'say', content: 'Welcome! Today I\'ll show you how this project works.' },
+        { type: 'heading', content: 'Demo' },
+        { type: 'click', content: 'Open the application in your browser' },
+        { type: 'say', content: 'Here\'s the main interface. Let me walk you through the key features.' },
+        { type: 'type', content: 'npm run dev' },
+        { type: 'next', content: 'Coming up: We\'ll look at the configuration options' },
+        { type: 'heading', content: 'Wrap Up' },
+        { type: 'say', content: 'That\'s all for today. Thanks for watching!' },
+        { type: 'note', content: 'End recording' }
+      ]
+    };
+
+    function getScripts() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      const scripts = data ? JSON.parse(data) : {};
+
+      // Always ensure example script exists
+      if (!scripts['example']) {
+        scripts['example'] = exampleScript;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
+      }
+
+      return scripts;
+    }
+
+    function setScripts(scripts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scripts));
+    }
+
+    // ============ MARKDOWN PARSING ============
+    function parseMarkdown(text) {
+      const blocks = [];
+      const paragraphs = text.split(/\n\n+/);
+
+      for (const para of paragraphs) {
+        const trimmed = para.trim();
+        if (!trimmed) continue;
+
+        // Heading: # text
+        if (trimmed.startsWith('# ')) {
+          blocks.push({ type: 'heading', content: trimmed.slice(2) });
+        }
+        // Click: [click] text
+        else if (trimmed.match(/^\[click\]\s*/i)) {
+          blocks.push({ type: 'click', content: trimmed.replace(/^\[click\]\s*/i, '') });
+        }
+        // Type: `code` or ```code```
+        else if (trimmed.startsWith('`') && trimmed.endsWith('`')) {
+          blocks.push({ type: 'type', content: trimmed.replace(/^`+|`+$/g, '') });
+        }
+        // Prepare: > prepare: text
+        else if (trimmed.match(/^>\s*prepare:/i)) {
+          blocks.push({ type: 'prepare', content: trimmed.replace(/^>\s*prepare:\s*/i, '') });
+        }
+        // Next: >> text
+        else if (trimmed.startsWith('>> ')) {
+          blocks.push({ type: 'next', content: trimmed.slice(3) });
+        }
+        // Note: ~ text
+        else if (trimmed.startsWith('~ ')) {
+          blocks.push({ type: 'note', content: trimmed.slice(2) });
+        }
+        // Default: say
+        else {
+          blocks.push({ type: 'say', content: trimmed });
+        }
+      }
+
+      return blocks;
+    }
+
+    function blocksToMarkdown(blocks) {
+      return blocks.map(block => {
+        switch (block.type) {
+          case 'heading': return `# ${block.content}`;
+          case 'click': return `[click] ${block.content}`;
+          case 'type': return `\`${block.content}\``;
+          case 'prepare': return `> prepare: ${block.content}`;
+          case 'next': return `>> ${block.content}`;
+          case 'note': return `~ ${block.content}`;
+          case 'say':
+          default: return block.content;
+        }
+      }).join('\n\n');
+    }
+
+    // ============ EDITOR ============
+    let editorWS = null;
+    let previewUpdateTimeout = null;
+
+    function loadEditor(name) {
+      const scripts = getScripts();
+      if (!scripts[name]) {
+        window.location.href = '/';
+        return;
+      }
+
+      // Hide presenter hints in editor view
+      document.getElementById('keyboardHints').style.display = 'none';
+      document.querySelector('.help-hint').style.display = 'none';
+
+      script = scripts[name];
+      document.getElementById('editorTitle').value = script.title || name;
+      document.getElementById('scriptEditor').value = blocksToMarkdown(script.blocks);
+      updatePreview();
+      connectEditorWS(name);
+
+      // Set up live preview on input
+      const editor = document.getElementById('scriptEditor');
+      editor.addEventListener('input', () => {
+        clearTimeout(previewUpdateTimeout);
+        previewUpdateTimeout = setTimeout(() => {
+          updatePreview();
+          saveEditorContent();
+        }, 150);
+      });
+
+      // Save title on change
+      document.getElementById('editorTitle').addEventListener('input', () => {
+        script.title = document.getElementById('editorTitle').value;
+        saveEditorContent();
+      });
+    }
+
+    function updatePreview() {
+      const text = document.getElementById('scriptEditor').value;
+      const blocks = parseMarkdown(text);
+      const preview = document.getElementById('previewPane');
+
+      preview.innerHTML = blocks.map(block => `
+        <div class="block ${block.type}">
+          <div class="block-label">${block.type}</div>
+          <div class="block-content">${escapeHtml(block.content)}</div>
+        </div>
+      `).join('');
+
+      // Broadcast to other connected clients
+      if (editorWS && editorWS.readyState === WebSocket.OPEN) {
+        editorWS.send(JSON.stringify({ type: 'preview', blocks }));
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function saveEditorContent() {
+      const text = document.getElementById('scriptEditor').value;
+      script.blocks = parseMarkdown(text);
+      script.title = document.getElementById('editorTitle').value;
+
+      const scripts = getScripts();
+      scripts[scriptName] = script;
+      setScripts(scripts);
+    }
+
+    function connectEditorWS(name) {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      editorWS = new WebSocket(`${protocol}//${window.location.host}/api/scripts/${name}/ws`);
+
+      editorWS.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'preview') {
+          // Another client updated the preview - could sync here if needed
+        }
+      };
+
+      editorWS.onclose = () => {
+        // Reconnect after a delay
+        setTimeout(() => connectEditorWS(name), 2000);
+      };
+    }
+
+    function startPresentation() {
+      saveEditorContent();
+      document.getElementById('editorView').classList.remove('active');
+      document.getElementById('teleprompter').classList.add('active');
+      document.getElementById('keyboardHints').style.display = '';
+      document.querySelector('.help-hint').style.display = '';
+      currentIndex = 0;
+      loadScript(scriptName);
+      // Blur any focused element so keyboard shortcuts work
+      if (document.activeElement) document.activeElement.blur();
+    }
+
     // ============ SCRIPT LIST ============
-    async function loadScriptList() {
-      const res = await fetch('/api/scripts');
-      const scripts = await res.json();
+    function loadScriptList() {
+      const scripts = getScripts();
+      const names = Object.keys(scripts);
       const ul = document.getElementById('scripts');
 
-      if (scripts.length === 0) {
+      if (names.length === 0) {
         ul.innerHTML = '<li class="empty" data-testid="empty-state">No scripts yet. Create one below.</li>';
         return;
       }
 
-      ul.innerHTML = scripts.map(name =>
-        `<li><a href="/${name}" data-testid="script-link-${name}">${name}</a></li>`
+      ul.innerHTML = names.map(name =>
+        `<li class="script-item">
+          <a href="/${name}" data-testid="script-link-${name}">${name}</a>
+          <button class="delete-btn" onclick="deleteScript('${name}')" title="Delete script" data-testid="delete-script-${name}">×</button>
+        </li>`
       ).join('');
     }
 
-    async function createNewScript() {
+    function createNewScript() {
       const name = document.getElementById('newScriptName').value.trim();
       if (!name) return;
 
-      const newScript = {
+      const scripts = getScripts();
+      scripts[name] = {
         title: name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
         blocks: [
           { type: 'heading', content: 'Introduction' },
           { type: 'say', content: 'Start writing your script here...' }
         ]
       };
-
-      await fetch(`/api/scripts/${name}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newScript)
-      });
+      setScripts(scripts);
 
       window.location.href = `/${name}`;
     }
 
+    function deleteScript(name) {
+      if (!confirm(`Delete script "${name}"?`)) return;
+      const scripts = getScripts();
+      delete scripts[name];
+      setScripts(scripts);
+      loadScriptList();
+    }
+
     // ============ LOAD SCRIPT ============
-    async function loadScript(name) {
-      const res = await fetch(`/api/scripts/${name}`);
-      if (!res.ok) {
+    function loadScript(name) {
+      const scripts = getScripts();
+      if (!scripts[name]) {
         window.location.href = '/';
         return;
       }
-      script = await res.json();
+      script = scripts[name];
       document.getElementById('scriptTitle').textContent = script.title || name;
       renderBlocks();
       setupSSE(name);
@@ -786,7 +1167,8 @@
     function goTo(index) {
       if (!script) return;
       currentIndex = Math.max(0, Math.min(index, script.blocks.length - 1));
-      document.querySelectorAll('.block').forEach((el, i) => {
+      // Only update blocks in the teleprompter content area, not editor preview
+      document.querySelectorAll('#content .block').forEach((el, i) => {
         el.classList.toggle('current', i === currentIndex);
         el.classList.toggle('past', i < currentIndex);
       });
@@ -844,7 +1226,7 @@
       openModal('Add Block', 'say', '');
     }
 
-    async function saveBlock() {
+    function saveBlock() {
       const content = document.getElementById('blockContent').value.trim();
       if (!content) return;
 
@@ -854,16 +1236,16 @@
         script.blocks.push({ type: selectedType, content });
       }
 
-      await saveScript();
+      saveScript();
       closeModal();
       renderBlocks();
     }
 
-    async function deleteBlock(index) {
+    function deleteBlock(index) {
       if (!confirm('Delete this block?')) return;
       script.blocks.splice(index, 1);
       if (currentIndex >= script.blocks.length) currentIndex = Math.max(0, script.blocks.length - 1);
-      await saveScript();
+      saveScript();
       renderBlocks();
     }
 
@@ -879,12 +1261,10 @@
       renderBlocks();
     }
 
-    async function saveScript() {
-      await fetch(`/api/scripts/${scriptName}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(script)
-      });
+    function saveScript() {
+      const scripts = getScripts();
+      scripts[scriptName] = script;
+      setScripts(scripts);
     }
 
     // ============ DRAG AND DROP ============
@@ -915,14 +1295,14 @@
           block.classList.remove('drag-over');
         });
 
-        block.addEventListener('drop', async (e) => {
+        block.addEventListener('drop', (e) => {
           e.preventDefault();
           const dropIndex = parseInt(block.dataset.index);
 
           if (draggedIndex !== null && draggedIndex !== dropIndex) {
             const [removed] = script.blocks.splice(draggedIndex, 1);
             script.blocks.splice(dropIndex, 0, removed);
-            await saveScript();
+            saveScript();
             renderBlocks();
           }
         });
@@ -1035,11 +1415,14 @@
       if (e.target === e.currentTarget) closeModal();
     });
 
+    // Present button
+    document.getElementById('presentBtn').addEventListener('click', startPresentation);
+
     // ============ INIT ============
     if (scriptName && scriptName !== '') {
       document.getElementById('scriptList').style.display = 'none';
-      document.getElementById('teleprompter').classList.add('active');
-      loadScript(scriptName);
+      document.getElementById('editorView').classList.add('active');
+      loadEditor(scriptName);
     } else {
       loadScriptList();
     }

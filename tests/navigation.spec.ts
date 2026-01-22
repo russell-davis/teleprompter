@@ -6,6 +6,8 @@ test.describe('Present Mode Navigation', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.setItem('teleprompter-help-seen', 'true'));
     await page.goto('/example');
+    // Click Present to enter teleprompter view (editor view is default now)
+    await page.getByTestId('present-button').click();
     // Wait for page to be fully loaded
     await page.waitForSelector('[data-testid="block-0"]');
   });
