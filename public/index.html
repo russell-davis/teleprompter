@@ -430,6 +430,122 @@
     .type-selector button[data-type="next"].selected { color: var(--next); }
     .type-selector button[data-type="heading"].selected { color: var(--heading); }
     .type-selector button[data-type="note"].selected { color: var(--note); }
+
+    /* Help button */
+    .help-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Help modal */
+    .help-modal {
+      max-width: 700px;
+    }
+
+    .help-modal h2 {
+      color: var(--heading);
+      margin-bottom: 1.5rem;
+    }
+
+    .help-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .help-section h3 {
+      font-size: 1rem;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+    }
+
+    .help-section p {
+      color: var(--dim);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .help-block-type {
+      padding: 0.6rem 0.75rem;
+      border-radius: 4px;
+      border-left: 3px solid;
+      font-size: 0.85rem;
+    }
+
+    .help-block-type.say { border-color: var(--say); background: rgba(255,255,255,0.05); }
+    .help-block-type.click { border-color: var(--click); background: rgba(78,205,196,0.1); }
+    .help-block-type.type { border-color: var(--type); background: rgba(255,230,109,0.1); }
+    .help-block-type.prepare { border-color: var(--prepare); background: rgba(255,107,107,0.1); }
+    .help-block-type.next { border-color: var(--next); background: rgba(162,155,254,0.1); }
+    .help-block-type.heading { border-color: var(--heading); background: rgba(116,185,255,0.1); }
+    .help-block-type.note { border-color: var(--note); background: rgba(136,136,136,0.1); }
+
+    .help-block-type strong {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .help-block-type span {
+      color: var(--dim);
+      font-size: 0.8rem;
+    }
+
+    .help-keys {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .help-key {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.6rem;
+      background: #1a1a1a;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+
+    .help-key kbd {
+      background: #333;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-family: inherit;
+    }
+
+    .help-key span {
+      color: var(--dim);
+    }
+
+    .help-footer {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #333;
+      text-align: center;
+    }
+
+    .help-footer button {
+      background: #4ecdc4;
+      color: #000;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -453,6 +569,7 @@
         <button id="editBtn">Edit</button>
         <button id="focusBtn">Focus</button>
         <button id="resetBtn">Reset</button>
+        <button id="helpBtn" class="help-btn" title="Help">?</button>
       </div>
     </div>
     <div class="content" id="content"></div>
@@ -465,6 +582,49 @@
     <kbd>E</kbd> Edit
     <kbd>F</kbd> Focus
     <kbd>R</kbd> Reset
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="helpOverlay">
+    <div class="modal help-modal">
+      <h2>How to Use Teleprompter</h2>
+
+      <div class="help-section">
+        <h3>Modes</h3>
+        <p><strong>Present mode</strong> (default): Navigate through your script with keyboard or clicks. Press Space or arrow keys to advance.</p>
+        <p><strong>Edit mode</strong> (E): See all blocks, drag to reorder, click buttons to edit/delete.</p>
+        <p><strong>Focus mode</strong> (F): Shows only the current block in large text for recording.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>Block Types</h3>
+        <div class="help-grid">
+          <div class="help-block-type say"><strong>Say</strong><span>What to speak</span></div>
+          <div class="help-block-type click"><strong>Click</strong><span>UI interactions</span></div>
+          <div class="help-block-type type"><strong>Type</strong><span>Commands to enter</span></div>
+          <div class="help-block-type prepare"><strong>Prepare</strong><span>Setup reminders</span></div>
+          <div class="help-block-type next"><strong>Next</strong><span>Preview ahead</span></div>
+          <div class="help-block-type heading"><strong>Heading</strong><span>Section breaks</span></div>
+          <div class="help-block-type note"><strong>Note</strong><span>Internal notes</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>Keyboard Shortcuts</h3>
+        <div class="help-keys">
+          <div class="help-key"><kbd>Space</kbd> <span>Next</span></div>
+          <div class="help-key"><kbd>↑</kbd><kbd>↓</kbd> <span>Navigate</span></div>
+          <div class="help-key"><kbd>E</kbd> <span>Edit mode</span></div>
+          <div class="help-key"><kbd>F</kbd> <span>Focus mode</span></div>
+          <div class="help-key"><kbd>R</kbd> <span>Reset</span></div>
+          <div class="help-key"><kbd>Esc</kbd> <span>Exit mode</span></div>
+        </div>
+      </div>
+
+      <div class="help-footer">
+        <button onclick="closeHelp()">Got it</button>
+      </div>
+    </div>
   </div>
 
   <!-- Edit Modal -->
@@ -792,8 +952,12 @@
           reset();
           break;
         case 'Escape':
+          closeHelp();
           if (editMode) toggleEdit();
           if (focusMode) toggleFocus();
+          break;
+        case '?':
+          showHelp();
           break;
         case 'Home':
           goTo(0);
@@ -804,11 +968,31 @@
       }
     });
 
+    // ============ HELP ============
+    function showHelp() {
+      document.getElementById('helpOverlay').classList.add('active');
+    }
+
+    function closeHelp() {
+      document.getElementById('helpOverlay').classList.remove('active');
+      localStorage.setItem('teleprompter-help-seen', 'true');
+    }
+
+    // Show help on first visit
+    if (!localStorage.getItem('teleprompter-help-seen') && scriptName) {
+      setTimeout(showHelp, 500);
+    }
+
     // ============ BUTTON EVENTS ============
     document.getElementById('editBtn').addEventListener('click', toggleEdit);
     document.getElementById('focusBtn').addEventListener('click', toggleFocus);
     document.getElementById('resetBtn').addEventListener('click', reset);
     document.getElementById('addBlockBtn').addEventListener('click', addNewBlock);
+    document.getElementById('helpBtn').addEventListener('click', showHelp);
+
+    document.getElementById('helpOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeHelp();
+    });
 
     document.getElementById('content').addEventListener('click', (e) => {
       if (editMode) return;
