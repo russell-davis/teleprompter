@@ -1,0 +1,6 @@
+node_modules/
+*.log
+
+# Keep example script, ignore personal scripts
+scripts/*
+!scripts/example.json

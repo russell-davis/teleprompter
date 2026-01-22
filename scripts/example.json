@@ -1,0 +1,49 @@
+{
+  "title": "Example Script",
+  "blocks": [
+    {
+      "type": "heading",
+      "content": "Introduction"
+    },
+    {
+      "type": "prepare",
+      "content": "Have your demo application ready"
+    },
+    {
+      "type": "say",
+      "content": "Welcome! Today I'll show you how this project works."
+    },
+    {
+      "type": "heading",
+      "content": "Demo"
+    },
+    {
+      "type": "click",
+      "content": "Open the application in your browser"
+    },
+    {
+      "type": "say",
+      "content": "Here's the main interface. Let me walk you through the key features."
+    },
+    {
+      "type": "type",
+      "content": "npm run dev"
+    },
+    {
+      "type": "next",
+      "content": "Coming up: We'll look at the configuration options"
+    },
+    {
+      "type": "heading",
+      "content": "Wrap Up"
+    },
+    {
+      "type": "say",
+      "content": "That's all for today. Thanks for watching!"
+    },
+    {
+      "type": "note",
+      "content": "End recording"
+    }
+  ]
+}
