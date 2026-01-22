@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "start": "bun run server.ts",
-    "dev": "bun --watch run server.ts"
+    "dev": "bun --watch run server.ts",
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
   }
 }

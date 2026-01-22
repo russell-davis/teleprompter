@@ -4,3 +4,7 @@ node_modules/
 # Keep example script, ignore personal scripts
 scripts/*
 !scripts/example.json
+
+# Test artifacts
+playwright-report/
+test-results/
