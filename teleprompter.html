@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter</title>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --panel: #141417;
+    --panel-2: #1c1c21;
+    --border: #2a2a31;
+    --text: #f4f4f5;
+    --muted: #8b8b96;
+    --accent: #5b8cff;
+    --accent-2: #36d399;
+    --danger: #ff5b6e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  /* ---------- EDIT VIEW ---------- */
+  #editView {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  #editView.hidden { display: none; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .topbar h1 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: .3px;
+    color: var(--text);
+  }
+  .topbar .spacer { flex: 1; }
+
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .ctrl input[type=range] { width: 110px; accent-color: var(--accent); }
+  .ctrl .val { color: var(--text); font-variant-numeric: tabular-nums; min-width: 34px; }
+
+  button {
+    font: inherit;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #25252c; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary:hover { background: #4a7bf0; }
+  label.toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--muted); }
+  label.toggle input { accent-color: var(--accent); }
+
+  /* ---------- SCRIPT BAR ---------- */
+  #scriptBar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 18px; background: var(--panel);
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .sb-label { font-size: 10px; letter-spacing: 1.2px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+  #scriptChips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 5px 10px; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--panel-2); cursor: pointer; font-size: 12px; color: var(--text);
+    user-select: none; transition: border-color .12s, background .12s;
+  }
+  .chip:hover { background: #25252c; }
+  .chip.active { border-color: var(--accent); background: rgba(91,140,255,.16); }
+  .chip .num { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .chip.active .num { color: var(--accent); }
+  .chip .x { color: var(--muted); font-size: 14px; line-height: 1; margin-left: 1px; }
+  .chip .x:hover { color: var(--danger); }
+  .sb-new {
+    font-size: 12px; padding: 5px 12px; border-radius: 999px;
+    border: 1px dashed var(--border); background: transparent; color: var(--muted);
+  }
+  .sb-new:hover { color: var(--text); border-color: var(--accent); background: var(--panel-2); }
+
+  #editorWrap { flex: 1; display: flex; min-height: 0; }
+  #editor {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    outline: none;
+    resize: none;
+    padding: 28px 8% 28px 8%;
+    font-size: 20px;
+    line-height: 1.6;
+    font-family: "SF Pro Text", -apple-system, system-ui, sans-serif;
+  }
+  #editor::placeholder { color: #4a4a55; }
+
+  .hint { font-size: 11px; color: var(--muted); }
+
+  /* ---------- OBS PANEL ---------- */
+  #obsPanel {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height .2s, padding .2s;
+  }
+  #obsPanel.open { max-height: 120px; padding: 14px 18px; }
+  #obsPanel .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #obsPanel input[type=text], #obsPanel input[type=password] {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: 7px; font: inherit; font-size: 13px;
+  }
+  #obsStatus { font-size: 12px; color: var(--muted); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--muted); margin-right:6px; vertical-align: middle;}
+  .dot.on { background: var(--accent-2); }
+  .dot.rec { background: var(--danger); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+
+  /* ---------- PRESENT VIEW ---------- */
+  #presentView {
+    position: fixed; inset: 0;
+    background: #000;
+    display: none;
+  }
+  #presentView.active { display: block; }
+
+  #stage {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  #stage::-webkit-scrollbar { display: none; }
+  #stageInner {
+    padding: 45vh 10% 55vh 10%;
+    font-size: var(--prompt-size, 52px);
+    line-height: var(--prompt-lh, 1.5);
+    font-weight: 600;
+    color: #fff;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    transform-origin: center center;
+  }
+  #stage.mirror #stageInner { transform: scaleX(-1); }
+  #stage.flipV #stageInner { transform: scaleY(-1); }
+  #stage.mirror.flipV #stageInner { transform: scale(-1,-1); }
+
+  /* reading line + edge fades */
+  #readingLine {
+    position: absolute; left: 0; right: 0; top: 42%;
+    height: 0; border-top: 2px solid rgba(91,140,255,.5);
+    pointer-events: none; z-index: 5; display: none;
+  }
+  #readingLine.show { display: block; }
+  #readingLine::before, #readingLine::after {
+    content: ""; position: absolute; top: -7px;
+    border-top: 8px solid transparent; border-bottom: 8px solid transparent;
+  }
+  #readingLine::before { left: 0; border-left: 12px solid rgba(91,140,255,.7); }
+  #readingLine::after { right: 0; border-right: 12px solid rgba(91,140,255,.7); }
+
+  #fadeTop, #fadeBot {
+    position: absolute; left: 0; right: 0; height: 22%; pointer-events: none; z-index: 4;
+  }
+  #fadeTop { top: 0; background: linear-gradient(to bottom, #000 0%, transparent 100%); }
+  #fadeBot { bottom: 0; background: linear-gradient(to top, #000 0%, transparent 100%); }
+  #presentView.nofade #fadeTop, #presentView.nofade #fadeBot { display: none; }
+
+  /* HUD */
+  #hud {
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    max-width: calc(100vw - 24px);
+    background: rgba(20,20,23,.82); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px 16px; display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 8px 18px;
+    z-index: 10; font-size: 13px; color: var(--muted);
+    transition: opacity .4s; user-select: none;
+  }
+  #hud.dim { opacity: 0; }
+  #hud:hover { opacity: 1; }
+  #hud b { color: var(--text); font-variant-numeric: tabular-nums; }
+  #hud .pill { background: var(--panel-2); border:1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
+  #hud .rec-pill { color: var(--danger); border-color: var(--danger); }
+  #hud .obs-off { color: var(--muted); }
+  #hud #scriptPill { color: var(--accent-2); border-color: rgba(54,211,153,.4); }
+  #hud .dot { width: 7px; height: 7px; }
+  #hud kbd {
+    background: var(--panel-2); border:1px solid var(--border); border-bottom-width:2px;
+    border-radius: 5px; padding: 1px 6px; font-size: 11px; color: var(--text);
+    font-family: ui-monospace, monospace;
+  }
+
+  /* countdown */
+  #countdown {
+    position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    z-index: 20; background: rgba(0,0,0,.4);
+  }
+  #countdown.show { display: flex; }
+  #countdown span { font-size: 22vh; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+
+  #keyhelp {
+    position: absolute; top: 16px; right: 20px; z-index: 10;
+    font-size: 11px; color: var(--muted); text-align: right; line-height: 1.7;
+    pointer-events: none;
+    background: rgba(10,10,11,.55); backdrop-filter: blur(4px);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+  }
+  #keyhelp .legend-title {
+    font-size: 9px; letter-spacing: 1.2px; font-weight: 700;
+    color: var(--accent); margin: 7px 0 3px;
+  }
+  #keyhelp .legend-title:first-child { margin-top: 0; }
+  #keyhelp .legend-note { opacity: .6; font-style: italic; }
+  #keyhelp kbd {
+    background: rgba(28,28,33,.85); border:1px solid var(--border);
+    border-radius: 4px; padding: 0 5px; color: var(--text); font-family: ui-monospace, monospace;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ EDIT VIEW ============ -->
+<div id="editView">
+  <div class="topbar">
+    <h1>▶ Teleprompter</h1>
+
+    <div class="ctrl">Size
+      <input type="range" id="sizeSlider" min="24" max="120" step="2">
+      <span class="val" id="sizeVal"></span>
+    </div>
+    <div class="ctrl">Speed
+      <input type="range" id="speedSlider" min="10" max="320" step="5">
+      <span class="val" id="speedVal"></span>
+    </div>
+    <div class="ctrl">Width
+      <input type="range" id="widthSlider" min="40" max="100" step="2">
+      <span class="val" id="widthVal"></span>
+    </div>
+
+    <label class="toggle"><input type="checkbox" id="mirrorChk"> Mirror</label>
+    <label class="toggle"><input type="checkbox" id="lineChk"> Reading line</label>
+    <label class="toggle"><input type="checkbox" id="cdChk"> 3s countdown</label>
+
+    <div class="spacer"></div>
+
+    <button id="obsToggleBtn">Recording (OBS)</button>
+    <button class="primary" id="presentBtn">Present ▶</button>
+  </div>
+
+  <div id="scriptBar">
+    <span class="sb-label">Scripts</span>
+    <div id="scriptChips"></div>
+    <button id="newScriptBtn" class="sb-new">+ New</button>
+    <span class="hint">click to switch · double-click to rename · <b>1–9</b> to switch in present mode</span>
+  </div>
+
+  <div id="editorWrap">
+    <textarea id="editor" spellcheck="true" placeholder="Paste or write your script here.
+
+Blank lines become paragraph breaks. Write the way you talk — short sentences, one thought per line reads best on a prompter.
+
+When you're ready, hit Present (or press ` / ⌘-Ctrl+Enter)."></textarea>
+  </div>
+
+  <div id="obsPanel">
+    <div class="row">
+      <span id="obsStatus"><span class="dot" id="obsDot"></span>Not connected</span>
+      <input type="text" id="obsHost" placeholder="ws://localhost:4455" style="width:200px">
+      <input type="password" id="obsPass" placeholder="password (if set)" style="width:170px">
+      <button id="obsConnectBtn">Connect</button>
+      <span class="hint">Once connected, <b>R</b> auto-records each take. <b>Space</b> never records (safe to rehearse). In OBS: Tools → WebSocket Server Settings → Enable.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PRESENT VIEW ============ -->
+<div id="presentView">
+  <div id="stage"><div id="stageInner"></div></div>
+  <div id="fadeTop"></div>
+  <div id="fadeBot"></div>
+  <div id="readingLine"></div>
+  <div id="countdown"><span id="cdNum">3</span></div>
+
+  <div id="keyhelp">
+    <div class="legend-title">PROMPTER</div>
+    <div><kbd>Space</kbd> scroll play / pause</div>
+    <div><kbd>↑</kbd><kbd>↓</kbd> speed · <kbd>+</kbd><kbd>−</kbd> size</div>
+    <div><kbd>⇧↑</kbd><kbd>⇧↓</kbd> nudge · <kbd>Home</kbd><kbd>End</kbd> jump</div>
+    <div><kbd>M</kbd> mirror · <kbd>F</kbd> flip</div>
+    <div class="legend-title">TAKE / RECORDING</div>
+    <div><kbd>R</kbd> start / re-take <span class="legend-note">(records)</span></div>
+    <div><kbd>⌫</kbd> cut &amp; hold · <kbd>Esc</kbd> wrap</div>
+    <div class="legend-title">SCRIPTS</div>
+    <div><kbd>1</kbd>–<kbd>9</kbd> switch script <span class="legend-note">(resets)</span></div>
+    <div><kbd>`</kbd> toggle edit / present</div>
+  </div>
+
+  <div id="hud">
+    <span class="pill" id="scriptPill">▸ <b id="scriptLabel">1 · Script 1</b></span>
+    <span class="pill">Take <b id="takeNum">1</b></span>
+    <span><b id="hudElapsed">0:00</b><span style="opacity:.55"> / ~<b id="hudRemain" style="color:inherit">0:00</b> left</span></span>
+    <span>Speed <b id="hudSpeed">0</b></span>
+    <span id="hudState"><b id="playState">Paused</b></span>
+    <span class="pill" id="obsChip"><span class="dot" id="obsChipDot"></span><b id="obsChipLabel">OBS off</b></span>
+  </div>
+</div>
+
+<script src="teleprompter.js"></script>
+</body>
+</html>

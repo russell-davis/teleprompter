@@ -1,0 +1,4 @@
+# Build context is this V2/ folder. The image only needs the three app files;
+# keep the supporting docs out of it.
+BACKLOG.md
+calibration-script.txt

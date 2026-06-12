@@ -1,0 +1,8 @@
+node_modules/
+*.log
+
+# Personal scripts — keep them out of the repo
+scripts/
+
+# Claude Code local settings
+.claude/settings.local.json
